@@ -20,7 +20,7 @@ git clone https://github.com/ploymel/imitation_learning.git
 - tensorflow_gpu 1.1 or more
 - Keras
 - numpy
-- scipey
+- scipy
 - PIL
 - Jupyter Notebook
 
@@ -61,7 +61,7 @@ The data is stored on CSV file. The CSV contains 7 columns:<br/>
 See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/master/data_augmentation.ipynb) for more information.
 
 ## Neural Network
-
+![Neural Network](img/network.png)
 
 
 ## Reference
