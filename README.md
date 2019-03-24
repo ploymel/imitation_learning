@@ -32,7 +32,7 @@ $ python drive.py
 After the program running press `R` to start Recording.<br/>
 
 **Training Model**
-The training files are in `model/experiment**` folder
+The training files are in `models/experiment**` folder
 ```
 # open jupyter notebook
 $ jupyter notebook
@@ -50,7 +50,7 @@ $ python drive.py -a Imitaion
 
 The data is stored on CSV file. The CSV contains 7 columns:<br/>
 1. frame (Frame number)
-2. image path (The RGB images stored at 200x88 resolution)
+2. image path (The RGB images stored at 200x66 resolution)
 3. throttle, float
 4. steering_angle, float
 5. brake, float
@@ -58,7 +58,7 @@ The data is stored on CSV file. The CSV contains 7 columns:<br/>
 7. high_level_command, float (which 1.0, 2.0, 3.0 and 4.0 are represented left, right, straight and lanefollow.)
 
 ## Preprocess
-See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/master/data_augmentation.ipynb) for more information.
+See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/master/augmentation/data_augmentation.ipynb) for more information.
 
 ## Neural Network
 ![Neural Network](img/network.png)
