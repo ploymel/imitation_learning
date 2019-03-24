@@ -2,6 +2,7 @@ source
 *.py
 !drive.py
 !recording.py
+!agents/imitation_learning/*.py
 !*/*/roaming_agent.py
 !*/*/local_planner.py
 __pycache__
