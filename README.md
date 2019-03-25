@@ -64,7 +64,7 @@ See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/
 ![Neural Network](img/network.png)
 
 
-## Reference
+## References
 - [End-to-end Driving via Conditional Imitation Learning](http://vladlen.info/papers/conditional-imitation.pdf)<br/>
 Codevilla, Felipe and Müller, Matthias and López, Antonio and Koltun, Vladlen and Dosovitskiy, Alexey. ICRA 2018
 - [End to End Learning for Self-Driving Cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)<br/>

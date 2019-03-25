@@ -28,7 +28,7 @@ class ImitationLearning(Agent):
         self._proximity_threshold = 10.0  # meters
         self._state = AgentState.NAVIGATING
         self._local_planner = LocalPlanner(self._vehicle)
-        self.model = load_model('pre-trained_model/experiment03/model-009.h5')
+        self.model = load_model('pre-trained_model/experiment04/model-003.h5')
 
 
         # setting up global router
