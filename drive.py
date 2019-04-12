@@ -80,8 +80,8 @@ from agents.navigation.basic_agent import *
 from agents.imitation_learning.imitation_learning import *
 from recording import Recording
 
-frame_number = 815846
-name_to_save = 'no_obstacle_no_traffic/train_3'
+frame_number = 238554
+name_to_save = 'no_obstacle_no_traffic/with_arrows'
 recording = Recording(name_to_save)
 high_level_command = -1
 img = None
@@ -140,12 +140,12 @@ class World(object):
             self.destroy()
 
             spawn_points = self.world.get_map().get_spawn_points()
-            spawn_point = spawn_points[2]
+            spawn_point = spawn_points[1]
             self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         while self.vehicle is None:
             spawn_points = self.world.get_map().get_spawn_points()
-            spawn_point = spawn_points[2]
+            spawn_point = spawn_points[1]
             self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         # Set up the sensors.

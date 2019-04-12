@@ -28,7 +28,7 @@ class ImitationLearning(Agent):
         self._proximity_threshold = 10.0  # meters
         self._state = AgentState.NAVIGATING
         self._local_planner = LocalPlanner(self._vehicle)
-        self.model = load_model('pre-trained_model/experiment04/model-003.h5')
+        self.model = load_model('pre-trained_model/experiment04/model-002.h5')
 
 
         # setting up global router
@@ -148,7 +148,8 @@ class ImitationLearning(Agent):
             acc = 0.0
 
         control = carla.VehicleControl()
-        control.steer = steer / 0.25
+        control.steer = (steer * 10) - 1
+        # control.steer = steer / 0.25
         control.throttle = acc / 0.25
         control.brake = brake / 0.25
 
