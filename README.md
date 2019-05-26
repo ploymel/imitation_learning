@@ -79,5 +79,6 @@ See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/
 Codevilla, Felipe and Müller, Matthias and López, Antonio and Koltun, Vladlen and Dosovitskiy, Alexey. ICRA 2018
 - [End to End Learning for Self-Driving Cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)<br/>
 Nvidia
-- [Autonomous vehicle control: End-to-end Learning in Simulated Urban Environment](https://arxiv.org/pdf/1905.06712.pdf)
+- [Autonomous vehicle control: End-to-end Learning in Simulated Urban Environment](https://arxiv.org/pdf/1905.06712.pdf)<br/>
+Hege Haavaldsen, Max Aasbø, Frank Lindseth
 
