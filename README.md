@@ -1,9 +1,9 @@
 # Self driving with simulator
-This respository was created for the senior project of our Bachelor's Degree in Computer Science.<br/>  
-This project is focusing on prediction the car behaviour using Conditional Imitation Learning.<br/>  
-For the network that we used in this project we modified from [End-to-end Driving via Conditional Imitation Learning](http://vladlen.info/papers/conditional-imitation.pdf)<br/>  
+This respository was created for the senior project of our Bachelor's Degree in Computer Science.<br/>
+This project is focusing on prediction the car behaviour using Conditional Imitation Learning.<br/>
+For the network that we used in this project we modified from [Autonomous vehicle control: End-to-end Learning in Simulated Urban Environment](https://arxiv.org/pdf/1905.06712.pdf)<br/>
 
-**Note:** All data in our dataset collected from simulator [CARLA](http://carla.org/)<br/> 
+**Note:** All data in our dataset collected from simulator [CARLA](http://carla.org/)<br/>
 
 ## Getting Started
 **CARLA Simulator**<br/>
@@ -23,16 +23,25 @@ git clone https://github.com/ploymel/imitation_learning.git
 - scipy
 - PIL
 - Jupyter Notebook
+- pygame
+- category_encoders
+- **Game Controller**
 
 ## Running
 **Collect data**<br/>
+Before running the program plug-in game controller (Game controller is for telling the command but you can modify the code to suit you if you didn't got one) <br/>
 ```
-$ python drive.py
+$ python data-collect.py -f [folder-destination]
 ```
 After the program running press `R` to start Recording.<br/>
+**TO CONTROL THE VEHICLE** <br/>
+- Using WASD or the arrows to control the vehicle.
+- Using X B and RT to give the command: X for Left B for Right and RT for straight
+- Using A to terminate the episode and start new episode
+- Using Y to change gear
 
-**Training Model**
-The training files are in `models/experiment**` folder
+**Training Model** <br/>
+The training files are in `models/*/model.ipynb` folder
 ```
 # open jupyter notebook
 $ jupyter notebook
@@ -42,11 +51,11 @@ $ jupyter notebook
 - Open the simulator
 - Run the following command
 ```
-$ python drive.py -a Imitaion
+$ python drive.py -a Imitaion -m [model-file.h5]
 ```
 
 ## Dataset
-- [The dataset for the first pharse - no obstacles and traffic lights can be download here](https://drive.google.com/file/d/1s5NGfWNNpd7b1EYixHStOhw4R7BqTWU8/view?usp=sharing) 1.6 GB
+- **NOT AVAILABLE FOR NOW!!** [The dataset for the first pharse - no obstacles and traffic lights can be download here](https://drive.google.com/file/d/1s5NGfWNNpd7b1EYixHStOhw4R7BqTWU8/view?usp=sharing) 1.6 GB
 
 The data is stored on CSV file. The CSV contains 7 columns:<br/>
 1. frame (Frame number)
@@ -55,6 +64,7 @@ The data is stored on CSV file. The CSV contains 7 columns:<br/>
 4. steering_angle, float
 5. brake, float
 6. speed, float
+7. traffic_state, int
 7. high_level_command, float (which 1.0, 2.0, 3.0 and 4.0 are represented left, right, straight and lanefollow.)
 
 ## Preprocess
@@ -69,4 +79,5 @@ See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/
 Codevilla, Felipe and Müller, Matthias and López, Antonio and Koltun, Vladlen and Dosovitskiy, Alexey. ICRA 2018
 - [End to End Learning for Self-Driving Cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)<br/>
 Nvidia
+- [Autonomous vehicle control: End-to-end Learning in Simulated Urban Environment](https://arxiv.org/pdf/1905.06712.pdf)
 
