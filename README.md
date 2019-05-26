@@ -57,7 +57,7 @@ $ python drive.py -a Imitaion -m [model-file.h5]
 ## Dataset
 - **NOT AVAILABLE FOR NOW!!** [The dataset for the first pharse - no obstacles and traffic lights can be download here](https://drive.google.com/file/d/1s5NGfWNNpd7b1EYixHStOhw4R7BqTWU8/view?usp=sharing) 1.6 GB
 
-The data is stored on CSV file. The CSV contains 7 columns:<br/>
+The data is stored on CSV file. The CSV contains 8 columns:<br/>
 1. frame (Frame number)
 2. image path (The RGB images stored at 200x66 resolution)
 3. throttle, float
