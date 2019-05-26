@@ -1,13 +1,9 @@
-source
-*.py
-!drive.py
-!recording.py
-!agents/imitation_learning/*.py
-!*/*/roaming_agent.py
-!*/*/local_planner.py
+PythonAPI/*.egg
+PythonAPI/agents/navigation
+PythonAPI/agents/tools
 __pycache__
 */__pycache__
 */*/__pycache__
 _out
-pre-trained_model
+pre-trained
 .ipynb_checkpoints

@@ -9,9 +9,9 @@ from keras.models import load_model
 
 import numpy as np
 
-import agents.imitation_learning.utils as utils
+import agents.imitation.image_utils as utils
 
-class ImitationLearning(Agent):
+class TrafficImitationAgent(Agent):
     """
     RoamingAgent implements a basic agent that navigates scenes making random
     choices when facing an intersection.
@@ -19,16 +19,16 @@ class ImitationLearning(Agent):
     This agent respects traffic lights and other vehicles.
     """
 
-    def __init__(self, vehicle):
+    def __init__(self, vehicle, model_path):
         """
 
         :param vehicle: actor to apply to local planner logic onto
         """
-        super(ImitationLearning, self).__init__(vehicle)
+        super(TrafficImitationAgent, self).__init__(vehicle)
         self._proximity_threshold = 10.0  # meters
         self._state = AgentState.NAVIGATING
         self._local_planner = LocalPlanner(self._vehicle)
-        self.model = load_model('pre-trained_model/experiment04/model-002.h5')
+        self.model = load_model("pre-trained/" + model_path)
 
 
         # setting up global router
@@ -81,7 +81,7 @@ class ImitationLearning(Agent):
         self._current_plan = solution
         self._local_planner.set_global_plan(self._current_plan)
 
-    def run_step(self, debug=False):
+    def run_step(self, is_traffic_check=False, debug=False):
         """
         Execute one step of navigation.
         :return: carla.VehicleControl
@@ -90,29 +90,30 @@ class ImitationLearning(Agent):
         # is there an obstacle in front of us?
         hazard_detected = False
 
-        # retrieve relevant elements for safe navigation, i.e.: traffic lights
-        # and other vehicles
-        # actor_list = self._world.get_actors()
-        # vehicle_list = actor_list.filter("*vehicle*")
-        # lights_list = actor_list.filter("*traffic_light*")
+        if is_traffic_check:
+            # retrieve relevant elements for safe navigation, i.e.: traffic lights
+            # and other vehicles
+            actor_list = self._world.get_actors()
+            vehicle_list = actor_list.filter("*vehicle*")
+            lights_list = actor_list.filter("*traffic_light*")
 
-        # # check possible obstacles
-        # vehicle_state, vehicle = self._is_vehicle_hazard(vehicle_list)
-        # if vehicle_state:
-        #     if debug:
-        #         print('!!! VEHICLE BLOCKING AHEAD [{}])'.format(vehicle.id))
+            # check possible obstacles
+            vehicle_state, vehicle = self._is_vehicle_hazard(vehicle_list)
+            if vehicle_state:
+                if debug:
+                    print('!!! VEHICLE BLOCKING AHEAD [{}])'.format(vehicle.id))
 
-        #     self._state = AgentState.BLOCKED_BY_VEHICLE
-        #     hazard_detected = True
+                self._state = AgentState.BLOCKED_BY_VEHICLE
+                hazard_detected = True
 
-        # # check for the state of the traffic lights
-        # light_state, traffic_light = self._is_light_red(lights_list)
-        # if light_state:
-        #     if debug:
-        #         print('=== RED LIGHT AHEAD [{}])'.format(traffic_light.id))
+            # check for the state of the traffic lights
+            light_state, traffic_light = self._is_light_red(lights_list)
+            if light_state:
+                if debug:
+                    print('=== RED LIGHT AHEAD [{}])'.format(traffic_light.id))
 
-        #     self._state = AgentState.BLOCKED_RED_LIGHT
-        #     hazard_detected = True
+                self._state = AgentState.BLOCKED_RED_LIGHT
+                hazard_detected = True
 
         if hazard_detected:
             control = self.emergency_stop()
@@ -121,15 +122,13 @@ class ImitationLearning(Agent):
             self._state = AgentState.NAVIGATING
             # standard local planner behavior
             _, high_level_command = self._local_planner.run_step(debug=debug)
-            print(high_level_command)
             control = self._compute_action(self._image, get_speed(self._vehicle), high_level_command.value)
 
-        return control
+        return control, high_level_command
 
     def _compute_action(self, rgb_image, speed, direction=None):
 
         image_input = rgb_image
-        image_input = utils.preprocess(image_input)
         image_input = image_input.astype(np.float32)
         image_input = np.multiply(image_input, 1.0 / 255.0)
 
@@ -143,15 +142,16 @@ class ImitationLearning(Agent):
         if acc > brake:
             brake = 0.0
 
-        # We limit speed to 35 km/h to avoid
-        if speed > 10.0 and brake == 0.0:
+        # We limit speed to 20 km/h to avoid
+        if speed > 20.0 and brake == 0.0:
             acc = 0.0
 
         control = carla.VehicleControl()
-        control.steer = (steer * 10) - 1
-        # control.steer = steer / 0.25
+        control.steer = steer / 0.25
         control.throttle = acc / 0.25
         control.brake = brake / 0.25
+
+        print(control.throttle)
 
         control.hand_brake = False
 
@@ -159,12 +159,13 @@ class ImitationLearning(Agent):
 
     def _control_function(self, image, speed, direction):
         try:
-            # image = utils.preprocess(image) # apply the preprocessing
+            image = utils.resize(image)
             image = np.array([image])       # the model expects 4D array
             
             speed = np.array([speed/100])
 
             direction = np.array([direction/10])
+            
             predict_data = self.model.predict([image, speed, direction], batch_size=1)
             predicted_acc, predicted_steers, predicted_brake = predict_data[0]
 
@@ -175,4 +176,4 @@ class ImitationLearning(Agent):
         except Exception as e:
             print(e)
 
-        return 0, 0, 0
+        return 0, 0, 0, 0
