@@ -34,7 +34,7 @@ class Recording(object):
             'steering_angle': 0.0,
             'brake': 0.0,
             'speed': 0.0,
-            'traffc_state': 0,
+            'traffic_state': 0,
             'high_level_command': -1
         }
 

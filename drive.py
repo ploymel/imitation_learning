@@ -112,22 +112,9 @@ except IndexError:
 
 import carla
 from carla import ColorConverter as cc
-from agents.navigation.roaming_agent import *
-from agents.navigation.basic_agent import *
 from agents.imitation.imitation_agent import *
-from agents.imitation.traffic_imitation_agent import *
 
-
-# ==============================================================================
-# -- add Record to record dataset ----------------------------------------------
-# ==============================================================================
-
-from utils.recording import Recording
-frame_number = 0
-high_level_command = -1
-light_state = 0
 img = None
-recording = None
 command = -1
 
 # ==============================================================================
@@ -311,18 +298,6 @@ class KeyboardControl(object):
 
     def _parse_keys(self, keys, milliseconds):
         global command
-        self._control.throttle = 1.0 if keys[K_UP] or keys[K_w] else 0.0
-        steer_increment = 5e-4 * milliseconds
-        if keys[K_LEFT] or keys[K_a]:
-            self._steer_cache -= steer_increment
-        elif keys[K_RIGHT] or keys[K_d]:
-            self._steer_cache += steer_increment
-        else:
-            self._steer_cache = 0.0
-        self._steer_cache = min(0.7, max(-0.7, self._steer_cache))
-        self._control.steer = round(self._steer_cache, 1)
-        self._control.brake = 1.0 if keys[K_DOWN] or keys[K_s] else 0.0
-        self._control.hand_brake = keys[K_SPACE]
         if keys[K_UP] or keys[K_w]:
             command = 3
         elif keys[K_LEFT] or keys[K_a]:
@@ -666,7 +641,7 @@ class CameraManager(object):
 
     @staticmethod
     def _parse_image(weak_self, image):
-        global frame_number, img
+        global img
         self = weak_self()
         if not self:
             return
@@ -691,10 +666,6 @@ class CameraManager(object):
             array = array[:, :, ::-1]
             self._surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
             img = array
-        if self._recording:
-            recording.save_to_csv(frame_number, image, self._hud.measurements, high_level_command, light_state)
-            frame_number += 1
-            print('frame number = %d, ' % frame_number, high_level_command, end='\r')
 
 
 def str2bool(v):
@@ -711,7 +682,7 @@ def str2bool(v):
 # ==============================================================================
 
 def game_loop(args):
-    global high_level_command, light_state, command
+    global command
     pygame.init()
     pygame.font.init()
     world = None
@@ -728,21 +699,7 @@ def game_loop(args):
         world = World(client.get_world(), hud)
         controller = KeyboardControl(world, False)
 
-        if args.agent == "Roaming":
-            agent = RoamingAgent(world.vehicle)
-        elif args.agent == "Basic":
-            agent = BasicAgent(world.vehicle)
-            spawn_point = world.map.get_spawn_points()[6]
-            print(world.map.get_spawn_points())
-            print("Total: " + str(len(world.map.get_spawn_points())))
-            agent.set_destination((spawn_point.location.x,
-                                   spawn_point.location.y,
-                                   spawn_point.location.z))
-        elif args.agent == "Imitation":
-            agent = ImitationAgent(world.vehicle, args.model)
-
-        else:
-            agent = TrafficImitationAgent(world.vehicle, args.model)
+        agent = ImitationAgent(world.vehicle, args.model)
 
         clock = pygame.time.Clock()
         while True:
@@ -756,13 +713,10 @@ def game_loop(args):
             world.tick(clock)
             world.render(display)
             pygame.display.flip()
-            if args.agent == "Imitation" or args.agent == "Traffic":
-                agent.set_image(img)
-                agent.set_command(command)
-            if args.agent == "Roaming":
-                control, high_level_command, light_state = agent.run_step(is_traffic_check=args.traffic ,debug=False)
-            else:
-                control, high_level_command = agent.run_step(is_traffic_check=args.traffic ,debug=False)
+            agent.set_image(img)
+            agent.set_command(command)
+            control, _ = agent.run_step(debug=False)
+
             world.vehicle.apply_control(control)
 
     finally:
@@ -782,7 +736,6 @@ def game_loop(args):
 
 
 def main():
-    global recording
     argparser = argparse.ArgumentParser(
         description='CARLA Manual Control Client')
     argparser.add_argument(
@@ -807,19 +760,9 @@ def main():
         default='800x400',
         help='window resolution (default: 800x400)')
 
-    argparser.add_argument("-a", "--agent", type=str,
-                           choices=["Roaming", "Basic", "Imitation", "Traffic"],
-                           help="select which agent to run",
-                           default="Roaming")
-
     argparser.add_argument("-f", "--folder", type=str,
                            default="train",
                            help="destination of record folder (default: train)")
-
-
-    argparser.add_argument("-t", "--traffic", type=str2bool,
-                           default="False",
-                           help="Toggle traffic light on/off")
 
     argparser.add_argument("-m", "--model", type=str,
                            help="model path file")
@@ -834,8 +777,6 @@ def main():
     logging.info('listening to server %s:%s', args.host, args.port)
 
     print(__doc__)
-
-    recording = Recording(args.folder)
 
     try:
         

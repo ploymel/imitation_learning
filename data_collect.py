@@ -435,16 +435,13 @@ class KeyboardControl(object):
             if isinstance(self._control, carla.VehicleControl):
                 if traffic_light == TrafficLightState.RED:
                     self.emergency_stop()
-                    print(traffic_light)
+                    print(self._control.brake)
                 elif traffic_light == TrafficLightState.YELLOW:
                     self.release_stop()
                 else:
                     self._parse_vehicle_keys(pygame.key.get_pressed(), clock.get_time())
                     self._parse_vehicle_controller_joystick(self.joystick, clock.get_time())
                     self._control.reverse = self._control.gear < 0
-                self._parse_vehicle_keys(pygame.key.get_pressed(), clock.get_time())
-                self._parse_vehicle_controller_joystick(self.joystick, clock.get_time())
-                self._control.reverse = self._control.gear < 0
             elif isinstance(self._control, carla.WalkerControl):
                 self._parse_walker_keys(pygame.key.get_pressed(), clock.get_time())
             world.player.apply_control(self._control)

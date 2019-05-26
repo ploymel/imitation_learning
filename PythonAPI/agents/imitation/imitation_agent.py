@@ -43,98 +43,19 @@ class ImitationAgent(Agent):
     def set_command(self, command):
         self._command = command
 
-    def set_destination(self, location):
-        start_waypoint = self._map.get_waypoint(self._vehicle.get_location())
-        end_waypoint = self._map.get_waypoint(carla.Location(location[0],
-                                                             location[1],
-                                                             location[2]))
-
-        current_waypoint = start_waypoint
-        active_list = [ [(current_waypoint, RoadOption.LANEFOLLOW)] ]
-
-        solution = []
-        while not solution:
-            for _ in range(len(active_list)):
-                trajectory = active_list.pop()
-                if len(trajectory) > 1000:
-                    continue
-
-                # expand this trajectory
-                current_waypoint, _ = trajectory[-1]
-                next_waypoints = current_waypoint.next(5.0)
-                while len(next_waypoints) == 1:
-                    next_option = compute_connection(current_waypoint, next_waypoints[0])
-                    current_distance = next_waypoints[0].transform.location.distance(end_waypoint.transform.location)
-                    if current_distance < 5.0:
-                        solution = trajectory + [(end_waypoint, RoadOption.LANEFOLLOW)]
-                        break
-
-                    # keep adding nodes
-                    trajectory.append((next_waypoints[0], next_option))
-                    current_waypoint, _ = trajectory[-1]
-                    next_waypoints = current_waypoint.next(5.0)
-
-                if not solution:
-                    # multiple choices
-                    for waypoint in next_waypoints:
-                        next_option = compute_connection(current_waypoint, waypoint)
-                        active_list.append(trajectory + [(waypoint, next_option)])
-
-        assert solution
-
-        self._current_plan = solution
-        self._local_planner.set_global_plan(self._current_plan)
-
-    def run_step(self, is_traffic_check=False, debug=False):
+    def run_step(self, debug=False):
         """
         Execute one step of navigation.
         :return: carla.VehicleControl
         """
+        control = self._compute_action(self._image, get_speed(self._vehicle), self._command)
 
-        # is there an obstacle in front of us?
-        hazard_detected = False
-
-        if is_traffic_check:
-            # retrieve relevant elements for safe navigation, i.e.: traffic lights
-            # and other vehicles
-            actor_list = self._world.get_actors()
-            vehicle_list = actor_list.filter("*vehicle*")
-            lights_list = actor_list.filter("*traffic_light*")
-
-            # check possible obstacles
-            vehicle_state, vehicle = self._is_vehicle_hazard(vehicle_list)
-            if vehicle_state:
-                if debug:
-                    print('!!! VEHICLE BLOCKING AHEAD [{}])'.format(vehicle.id))
-
-                self._state = AgentState.BLOCKED_BY_VEHICLE
-                hazard_detected = True
-
-            # check for the state of the traffic lights
-            light_state, traffic_light = self._is_light_red(lights_list)
-            if light_state:
-                if debug:
-                    print('=== RED LIGHT AHEAD [{}])'.format(traffic_light.id))
-
-                self._state = AgentState.BLOCKED_RED_LIGHT
-                hazard_detected = True
-
-        if hazard_detected:
-            control = self.emergency_stop()
-            high_level_command = RoadOption.VOID
-        else:
-            self._state = AgentState.NAVIGATING
-            # standard local planner behavior
-            _, high_level_command = self._local_planner.run_step(debug=debug)
-            control = self._compute_action(self._image, get_speed(self._vehicle), self._command)
-
-        return control, high_level_command
+        return control, self._command
 
     def _compute_action(self, rgb_image, speed, direction=None):
 
         image_input = rgb_image
         image_input = image_input.astype(np.float32)
-        # image_input = np.multiply(image_input, 1.0 / 255.0)
 
         steer, acc, brake = self._control_function(image_input, speed, direction)
 
@@ -161,16 +82,6 @@ class ImitationAgent(Agent):
 
         return control
 
-    def enqueue(self, image, speed, cmd):
-        self.image_buffer[:self.num_steps-1] = self.image_buffer[1:self.num_steps]
-        self.image_buffer[self.num_steps-1] = image
-
-        self.speed_buffer[:self.num_steps-1] = self.speed_buffer[1:self.num_steps]
-        self.speed_buffer[self.num_steps-1] = speed
-
-        self.cmd_buffer[:self.num_steps-1] = self.cmd_buffer[1:self.num_steps]
-        self.cmd_buffer[self.num_steps-1] = cmd
-
     def encode_direction(self, direction):
         cmd = [0, 0, 0, 0]
         if direction == 4:
@@ -190,14 +101,9 @@ class ImitationAgent(Agent):
 
             cmd = self.encode_direction(direction)
 
-            # self.enqueue(image, speed/20, cmd)
-
             image = np.array([image])
             speed = np.array([speed/20])
             cmd = np.array([cmd])
-
-            # if np.count_nonzero(self.image_buffer) == 0:
-            #     return 0, 0, 0
             
             predict_data = self.model.predict([image, speed, cmd], batch_size=1)
             predicted_acc, predicted_steers, predicted_brake = predict_data[0]
