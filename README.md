@@ -55,7 +55,7 @@ $ python drive.py -a Imitaion -m [model-file.h5]
 ```
 
 ## Dataset
-- **NOT AVAILABLE FOR NOW!!** [The dataset for the first pharse - no obstacles and traffic lights can be download here](https://drive.google.com/file/d/1s5NGfWNNpd7b1EYixHStOhw4R7BqTWU8/view?usp=sharing) 1.6 GB
+- [The dataset for the first pharse - no obstacles and traffic lights can be download here](https://drive.google.com/file/d/10JjikJQZ5JbDYhTSYndP4SWr8NyyITKQ/view?usp=sharing) 9.6 GB
 
 The data is stored on CSV file. The CSV contains 8 columns:<br/>
 1. frame (Frame number)
@@ -75,10 +75,10 @@ See [data_augmetation.ipynb](https://github.com/ploymel/imitation_learning/blob/
 
 
 ## References
+- [Autonomous vehicle control: End-to-end Learning in Simulated Urban Environment](https://arxiv.org/pdf/1905.06712.pdf)<br/>
+Hege Haavaldsen, Max Aasbø, Frank Lindseth
 - [End-to-end Driving via Conditional Imitation Learning](http://vladlen.info/papers/conditional-imitation.pdf)<br/>
 Codevilla, Felipe and Müller, Matthias and López, Antonio and Koltun, Vladlen and Dosovitskiy, Alexey. ICRA 2018
 - [End to End Learning for Self-Driving Cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)<br/>
 Nvidia
-- [Autonomous vehicle control: End-to-end Learning in Simulated Urban Environment](https://arxiv.org/pdf/1905.06712.pdf)<br/>
-Hege Haavaldsen, Max Aasbø, Frank Lindseth
 

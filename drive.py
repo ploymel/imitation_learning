@@ -50,6 +50,7 @@ import random
 import re
 import sys
 import weakref
+from enum import Enum
 
 try:
     import pygame
@@ -114,12 +115,40 @@ import carla
 from carla import ColorConverter as cc
 from agents.imitation.imitation_agent import *
 
-img = None
-command = -1
+# ==============================================================================
+# -- Traffic Light State ----------------------------------------------------------
+# ==============================================================================
+
+class TrafficLightState(Enum):
+
+    NOTRAFFIC = 0
+    RED = 1
+    YELLOW = 2
+    GREEN = 3
+
+# ==============================================================================
+# -- Util -----------------------------------------------------------
+# ==============================================================================
+
+
+class Util(object):
+
+    @staticmethod
+    def blits(destination_surface, source_surfaces, rect=None, blend_mode=0):
+        for surface in source_surfaces:
+            destination_surface.blit(surface[0], surface[1], rect, blend_mode)
+
+    @staticmethod
+    def length (v):
+        return math.sqrt(v.x**2 + v.y**2 + v.z**2)
 
 # ==============================================================================
 # -- Global functions ----------------------------------------------------------
 # ==============================================================================
+
+img = None
+command = -1
+traffic_light = TrafficLightState.NOTRAFFIC
 
 def find_weather_presets():
     rgx = re.compile('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)')
@@ -152,6 +181,8 @@ class World(object):
         self.world.on_tick(hud.on_world_tick)
         self.recording_enabled = False
         self.recording_start = 0
+        self.affected_traffic_light = None
+        self.actors_with_transforms = []
 
     def restart(self):
         # Keep same camera config if the camera manager exists.
@@ -173,12 +204,14 @@ class World(object):
             self.destroy()
 
             spawn_points = self.map.get_spawn_points()
-            spawn_point = spawn_points[132]
+            # spawn_point = spawn_points[132]
+            spawn_point = spawn_points[3]
             self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         while self.vehicle is None:
             spawn_points = self.map.get_spawn_points()
-            spawn_point = spawn_points[132]
+            # spawn_point = spawn_points[132]
+            spawn_point = spawn_points[3]
             self.vehicle = self.world.spawn_actor(blueprint, spawn_point)
 
         # Set up the sensors.
@@ -198,7 +231,41 @@ class World(object):
         self.vehicle.get_world().set_weather(preset[0])
 
     def tick(self, clock):
+        actors = self.world.get_actors()
+        self.actors_with_transforms = [(actor, actor.get_transform()) for actor in actors]
+        _, traffic_lights, _, _ = self._split_actors()
+        self._find_affected_traffic_light([tl[0] for tl in traffic_lights])
+        self.update_affected_traffic_light()
         self.hud.tick(self, clock)
+
+    def _find_affected_traffic_light(self, list_tl):
+        self.affected_traffic_light = None
+
+        for tl in list_tl:
+            if self.vehicle is not None and hasattr(tl, 'trigger_volume'):
+                tl_t = tl.get_transform()
+
+                transformed_tv = tl_t.transform(tl.trigger_volume.location)
+                vehicle_location = self.vehicle.get_location()
+                d = vehicle_location.distance(transformed_tv)
+                s = Util.length(tl.trigger_volume.extent) + Util.length(self.vehicle.bounding_box.extent)
+                if ( d <= s ):
+                    # Highlight traffic light
+                    self.affected_traffic_light = tl
+
+    def update_affected_traffic_light(self):
+        global traffic_light
+        if self.vehicle is not None:
+            if self.affected_traffic_light is not None:
+                state = self.affected_traffic_light.state
+                if state == carla.libcarla.TrafficLightState.Green:
+                    traffic_light = TrafficLightState.GREEN
+                elif state == carla.libcarla.TrafficLightState.Yellow:
+                    traffic_light = TrafficLightState.YELLOW
+                else:
+                    traffic_light = TrafficLightState.RED
+            else:
+                traffic_light = TrafficLightState.NOTRAFFIC
 
     def render(self, display):
         self.camera_manager.render(display)
@@ -218,6 +285,25 @@ class World(object):
         for actor in actors:
             if actor is not None:
                 actor.destroy()
+
+    def _split_actors(self):
+        vehicles = []
+        traffic_lights = []
+        speed_limits = []
+        walkers = []
+
+        for actor_with_transform in self.actors_with_transforms:
+            actor = actor_with_transform[0]
+            if 'vehicle' in actor.type_id:
+                vehicles.append(actor_with_transform)
+            elif 'traffic_light' in actor.type_id:
+                traffic_lights.append(actor_with_transform)
+            elif 'speed_limit' in actor.type_id:
+                speed_limits.append(actor_with_transform)
+            elif 'walker' in actor.type_id:
+                walkers.append(actor_with_transform)
+
+        return (vehicles, traffic_lights, speed_limits, walkers)
 
 
 # ==============================================================================
@@ -578,12 +664,12 @@ class CameraManager(object):
         self._parent = parent_actor
         self._hud = hud
         self._recording = False
-        # self._camera_transforms = [
-        #     carla.Transform(carla.Location(x=1.6, z=1.7)),
-        #     carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))]
         self._camera_transforms = [
-            carla.Transform(carla.Location(x=1.7, z=1.7), carla.Rotation(pitch=-20)),
+            carla.Transform(carla.Location(x=1.7, z=1.7)),
             carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))]
+        # self._camera_transforms = [
+        #     carla.Transform(carla.Location(x=1.7, z=1.7), carla.Rotation(pitch=-20)),
+        #     carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))]
         self._transform_index = 1
         self._sensors = [
             ['sensor.camera.rgb', cc.Raw, 'Camera RGB'],
@@ -714,6 +800,7 @@ def game_loop(args):
             world.render(display)
             pygame.display.flip()
             agent.set_image(img)
+            agent.set_traffic_state(traffic_light.value)
             agent.set_command(command)
             control, _ = agent.run_step(debug=False)
 

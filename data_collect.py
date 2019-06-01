@@ -831,7 +831,7 @@ class CameraManager(object):
         #     carla.Transform(carla.Location(x=1.6, z=1.7)),
         #     carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))]
         self._camera_transforms = [
-            carla.Transform(carla.Location(x=1.7, z=1.7), carla.Rotation(pitch=-20)),
+            carla.Transform(carla.Location(x=1.7, z=1.7)),
             carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15))]
         self._transform_index = 1
         self._sensors = [
